@@ -8,9 +8,10 @@ import {
   Heading,
   Input,
 } from "@chakra-ui/react";
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ErrorMessage from "./ErrorMessage";
+import { AuthContext } from "../../context/AuthContext";
 // display="block" margin="auto"
 const Login = () => {
   const [form, setForm] = useState({
@@ -20,8 +21,9 @@ const Login = () => {
 
   // const [email, setEmail] = useState("");
   // const [password, setPassword] = useState("");
-  const [error, setError] = useState(false);
+  const [error, setError] = useState("");
   const [loading,setLoading]=useState(false)
+  const auth = useContext(AuthContext);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -34,11 +36,19 @@ const Login = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!form.email || !form.password) {
-      setError(true);
+    if (!form.email ) {
+      setError("Email required ");
       setForm(" ")
       return;
-    } else {
+    }
+    else if(!form.password){
+      setError(" password required");
+    }
+    
+    else if( form.password.length < 6 ){
+      setError("Password must be greater than the 6 characters");
+    }
+     else {
       try{
         setLoading(true)
         fetch("https://reqres.in/api/login", {
@@ -50,14 +60,18 @@ const Login = () => {
         })
           .then((res) => res.json())
           .then((res) => {
-            setForm(res)
+           
+            auth.handleLogin(res.token)
             setLoading(false)
+            console.log(res.token)
             navigate("/owner/inventory");
+            
+           
           })
       }
       catch(err){
         setLoading(false);
-        setError(true);
+        setError("Error");
         console.log(err);
         setForm("")
       }
@@ -79,7 +93,7 @@ const Login = () => {
         </Box>
         <Box my={4} textAlign="left">
           <form onSubmit={handleSubmit}>
-            {error && <ErrorMessage message={"Please fill out all fields"} />}
+            {error && <ErrorMessage message={error} />}
             <FormControl >
               {/* <ErrorMessage>fill all the fields</ErrorMessage> */}
            {/* Invalid Username & Password */}
